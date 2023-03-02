@@ -1,0 +1,8 @@
+.idea
+.vscode
+.metals
+target
+data
+dist
+tmp
+output

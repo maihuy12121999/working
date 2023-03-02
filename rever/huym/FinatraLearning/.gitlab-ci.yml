@@ -1,0 +1,140 @@
+image: registry.rever.vn/nerds/docker-images/maven:3.6.0-jdk-8
+
+cache:
+  paths:
+    - .m2/
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "-Dmode=ci --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+  mode: "ci"
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - deploy_doc_and_test
+#  - docker
+#  - deploy
+
+# Deploy document page
+#pages:
+#  stage: deploy_doc_and_test
+#  image: registry.rever.vn/nerds/docker-images/node:10
+#  script:
+#    - cd apidoc
+#    - npm i
+#    - npm start
+#    - cd ../
+#    - mkdir .public
+#    - cp -r apidoc/src/* .public
+#    - mv .public public
+#  artifacts:
+#    paths:
+#      - public
+#  only:
+#    - master
+
+maven:package:
+  services:
+    - name: registry.rever.vn/nerds/docker-images/docker:18-dind
+      alias: docker
+  except:
+    - tags
+  stage: deploy_doc_and_test
+  environment: development
+  script:
+    - "echo $MVN_SETTINGS > ~/.m2/settings.xml"
+    - "mvn $MAVEN_CLI_OPTS clean package"
+  artifacts:
+    paths:
+      - dist
+
+maven:package-tag:
+  services:
+    - name: registry.rever.vn/nerds/docker-images/docker:18-dind
+      alias: docker
+  stage: deploy_doc_and_test
+  only:
+    - tags
+  tags:
+    - prod_live
+    - shared
+  environment: development
+  script:
+    - "echo $MVN_SETTINGS > ~/.m2/settings.xml"
+    - "mvn $MAVEN_CLI_OPTS package -DskipTests -DskipDockerMaven"
+  artifacts:
+    paths:
+      - dist
+
+docker-staging:
+  stage: docker
+  image: registry.rever.vn/nerds/docker-images/docker:18-git
+  only:
+    - master
+  services:
+    - name: registry.rever.vn/nerds/docker-images/docker:18-dind
+      alias: docker
+  dependencies:
+    - maven:package
+  before_script:
+    - df -ah
+    - docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true # delete all exited containers
+    - docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || true  # delete all untagged images
+    - docker volume ls -qf dangling=true | xargs -r docker volume rm || true  # delete all unused volumes
+    - df -ah
+  after_script:
+    - df -ah
+    - docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true # delete all exited containers
+    - docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || true  # delete all untagged images
+    - docker volume ls -qf dangling=true | xargs -r docker volume rm || true  # delete all unused volumes
+    - df -ah
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.rever.vn
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME .
+    - docker push $CI_REGISTRY_IMAGE:$CI_BUILD_REF_NAME
+
+docker-production:
+  stage: docker
+  image: registry.rever.vn/nerds/docker-images/docker:18-git
+  only:
+    - tags
+  tags:
+    - prod_live
+    - shared
+  services:
+    - name: registry.rever.vn/nerds/docker-images/docker:18-dind
+      alias: docker
+  dependencies:
+    - maven:package-tag
+  before_script:
+    - df -ah
+    - docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true # delete all exited containers
+    - docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || true  # delete all untagged images
+    - docker volume ls -qf dangling=true | xargs -r docker volume rm || true  # delete all unused volumes
+    - df -ah
+  after_script:
+    - df -ah
+    - docker rm $(docker ps -qa --no-trunc --filter "status=exited") || true # delete all exited containers
+    - docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || true  # delete all untagged images
+    - docker volume ls -qf dangling=true | xargs -r docker volume rm || true  # delete all unused volumes
+    - df -ah
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.rever.vn
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG .
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+
+deploy-staging:
+  image: registry.rever.vn/nerds/docker-images/k8s-deploy:latest
+  stage: deploy
+  only:
+    - master
+  script:
+    - mkdir -p $HOME/.kube/
+    - echo -n $KUBE_CONFIG | base64 -d > $HOME/.kube/config
+    - kubectl config view
+    - kubectl cluster-info
+    - kubectl apply -f deploy/k8s/deployment.yml
+    - kubectl apply -f deploy/k8s/service.yml || true
+    - kubectl rollout restart -f deploy/k8s/deployment.yml
+    - notify_success || true

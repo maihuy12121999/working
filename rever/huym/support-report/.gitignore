@@ -1,0 +1,9 @@
+.idea
+.vscode
+.metals
+target
+src/main/resources
+test
+dist
+tmp
+data

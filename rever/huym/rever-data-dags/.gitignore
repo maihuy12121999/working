@@ -1,0 +1,7 @@
+*__pycache__
+.cache
+.idea
+.DS_Store
+.vscode
+prod_pull_remote_dags.sh
+stag_pull_remote_dags.sh

@@ -1,0 +1,80 @@
+image: git-registry.rever.vn/nerds/docker-images/maven:3.6.0-jdk-8
+
+cache:
+  paths:
+    - .m2/
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "-Dmode=ci --batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+  mode: "ci"
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - test_or_deploy_doc
+  - docker
+  - deploy
+
+
+maven:package:
+  services:
+    - name: git-registry.rever.vn/nerds/docker-images/docker:18-dind
+      alias: docker
+  except:
+    - tags
+  stage: test_or_deploy_doc
+  environment: development
+  script:
+    - "echo $MVN_SETTINGS > ~/.m2/settings.xml"
+    - "mvn $MAVEN_CLI_OPTS clean package"
+  artifacts:
+    paths:
+      - dist
+
+maven:package-tag:
+  services:
+    - name: git-registry.rever.vn/nerds/docker-images/docker:18-dind
+      alias: docker
+  stage: test_or_deploy_doc
+  only:
+    - tags
+  environment: development
+  script:
+    - "echo $MVN_SETTINGS > ~/.m2/settings.xml"
+    - "mvn $MAVEN_CLI_OPTS package -DskipTests -DskipDockerMaven"
+  after_script:
+    - du -sh dist
+  artifacts:
+    paths:
+      - dist
+
+docker-staging:
+  stage: docker
+  image: git-registry.rever.vn/nerds/docker-images/docker:18-git
+  only:
+    - staging
+  services:
+    - name: git-registry.rever.vn/nerds/docker-images/docker:18-dind
+      alias: docker
+  dependencies:
+    - maven:package
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN git-registry.rever.vn
+    - mkdir rclone && echo -n $RCLONE_SETTINGS | base64 -d > rclone/rclone.conf
+    - docker run --rm -v $(pwd)/rclone:/config/rclone -v $(pwd)/dist:/data git-registry.rever.vn/nerds/docker-images/rclone:1.53 copy /data "s3-rever-analysis-staging-spark-jobs:rever-analysis-staging/spark_jobs/$CI_PROJECT_NAME/latest"
+
+docker-production:
+  stage: docker
+  image: git-registry.rever.vn/nerds/docker-images/docker:18-git
+  only:
+    - tags
+  services:
+    - name: git-registry.rever.vn/nerds/docker-images/docker:18-dind
+      alias: docker
+  dependencies:
+    - maven:package-tag
+  script:
+    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN git-registry.rever.vn
+    - mkdir rclone && echo -n $RCLONE_SETTINGS | base64 -d > rclone/rclone.conf
+    - docker run --rm -v $(pwd)/rclone:/config/rclone -v $(pwd)/dist:/data git-registry.rever.vn/nerds/docker-images/rclone:1.53 copy /data "s3-rever-analysis-spark-jobs:rever-analysis/spark_jobs/$CI_PROJECT_NAME/$CI_COMMIT_TAG"

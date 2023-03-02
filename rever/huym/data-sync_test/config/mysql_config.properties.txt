@@ -1,0 +1,4 @@
+driverClassName = com.mysql.cj.jdbc.Driver
+jdbcUrl = jdbc:mysql://127.0.0.1:3306/hikaricp_mysql
+dataSource.user=root
+dataSource.password=Daghach1999

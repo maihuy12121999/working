@@ -1,0 +1,243 @@
+{
+	"info": {
+		"_postman_id": "a1c81711-5611-4ca6-924f-552b6f1385d8",
+		"name": "Http Server",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "RouteParam_CustomRequestClass",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/routeParam/Barca/2",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"routeParam",
+						"Barca",
+						"2"
+					],
+					"query": [
+						{
+							"key": "id",
+							"value": "1",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "RouteParam_FinagleRequest",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/groups/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"groups",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "QueryParam",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "localhost:8080/chovy?score=100&champion=true&stats=100,100,100",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"chovy"
+					],
+					"query": [
+						{
+							"key": "score",
+							"value": "100"
+						},
+						{
+							"key": "champion",
+							"value": "true"
+						},
+						{
+							"key": "stats",
+							"value": "100,100,100"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PostMethod",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\":1,\n    \"name\":\"maihuy\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/3",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Header",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "FormParam",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "age",
+							"value": "2",
+							"type": "default"
+						},
+						{
+							"key": "name",
+							"value": "mai huy",
+							"type": "default"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "localhost:8080/formPost/1",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"formPost",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PutMethod",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "sad"
+				},
+				"url": {
+					"raw": "localhost:8080/echo",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"echo"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PatchMethod",
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "sdas"
+				},
+				"url": {
+					"raw": "localhost:8080/patch",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"patch"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "OptionsMethod",
+			"request": {
+				"method": "OPTIONS",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "sa"
+				},
+				"url": {
+					"raw": "localhost:8080/options",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"options"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ResponseException",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "New Request",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,6 @@
+driverClassName = ru.yandex.clickhouse.ClickHouseDriver
+jdbcUrl = jdbc:clickhouse://172.31.24.169:8123/historical
+dataSource.user=r3v3r_etl_devteam
+dataSource.password=AEEFEW34r3v3r12ervrSWSQHHI=
+dataSource.portNumber=8123
+dataSource.serverName=172.31.24.169
